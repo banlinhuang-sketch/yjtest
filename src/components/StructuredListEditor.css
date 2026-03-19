@@ -1,0 +1,101 @@
+.structured-list-editor {
+  padding: 20px;
+  display: grid;
+  gap: 12px;
+}
+
+.structured-list-items {
+  display: grid;
+  gap: 12px;
+}
+
+.structured-list-row {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 36px;
+  align-items: start;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid #e6edf5;
+  background: #f8fafc;
+}
+
+.structured-list-index {
+  min-height: 40px;
+  display: grid;
+  place-items: center;
+  color: #94a3b8;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', 'Cascadia Mono', monospace;
+}
+
+.structured-list-textarea {
+  width: 100%;
+  min-height: 96px;
+  border: none;
+  outline: none;
+  resize: none;
+  background: transparent;
+  padding: 8px 0;
+  color: #0f172a;
+  font-size: 0.92rem;
+  line-height: 1.7;
+  font-family: inherit;
+}
+
+.structured-list-textarea::placeholder {
+  color: #94a3b8;
+}
+
+.structured-list-remove {
+  width: 32px;
+  height: 32px;
+  margin-top: 4px;
+  border: none;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    color 160ms ease,
+    opacity 160ms ease;
+}
+
+.structured-list-remove:hover:not(:disabled) {
+  background: #edf2f7;
+  color: #ef4444;
+}
+
+.structured-list-remove:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.structured-list-add {
+  width: 100%;
+  min-height: 42px;
+  border: 1px dashed #bfdbfe;
+  border-radius: 12px;
+  background: #f8fbff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #0052cc;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.structured-list-add:hover {
+  border-color: #60a5fa;
+  background: #eef5ff;
+  transform: translateY(-1px);
+}

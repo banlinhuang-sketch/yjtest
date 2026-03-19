@@ -1,0 +1,39 @@
+.global-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  z-index: 60;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 16px;
+  border-radius: 14px;
+  color: #fff;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.24);
+}
+
+.global-toast.success {
+  background: #111827;
+}
+
+.global-toast.success .global-toast-icon {
+  color: #22c55e;
+}
+
+.global-toast.error {
+  background: #7f1d1d;
+}
+
+.global-toast.error .global-toast-icon {
+  color: #fca5a5;
+}
+
+.global-toast.info {
+  background: #1d4ed8;
+}
+
+.global-toast.info .global-toast-icon {
+  color: #bfdbfe;
+}

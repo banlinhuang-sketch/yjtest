@@ -1,0 +1,140 @@
+.loading-skeleton,
+.loading-skeleton-row,
+.loading-skeleton-grid {
+  display: flex;
+}
+
+.loading-skeleton {
+  width: 100%;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.loading-skeleton-row {
+  align-items: center;
+  gap: 10px;
+}
+
+.loading-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.loading-skeleton-block,
+.loading-skeleton-icon {
+  display: inline-flex;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #e7edf5 20%, #f8fafc 50%, #e7edf5 80%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.25s linear infinite;
+}
+
+.loading-skeleton-block {
+  height: 12px;
+}
+
+.loading-skeleton-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+}
+
+.loading-skeleton-block.title {
+  width: 72%;
+  height: 16px;
+  border-radius: 10px;
+}
+
+.loading-skeleton-block.title.short {
+  width: 42%;
+}
+
+.loading-skeleton-block.title.wide {
+  width: 86%;
+}
+
+.loading-skeleton-block.text {
+  width: 100%;
+  border-radius: 9px;
+}
+
+.loading-skeleton-block.text.wide {
+  width: 88%;
+}
+
+.loading-skeleton-block.meta {
+  width: 132px;
+  height: 10px;
+}
+
+.loading-skeleton-block.meta.short {
+  width: 96px;
+}
+
+.loading-skeleton-block.chip {
+  width: 62px;
+  height: 24px;
+}
+
+.loading-skeleton-block.metric {
+  width: 100%;
+  height: 48px;
+  border-radius: 14px;
+}
+
+.loading-skeleton-block.align-end {
+  margin-left: auto;
+}
+
+.loading-skeleton-card,
+.loading-skeleton-table,
+.loading-skeleton-panel,
+.loading-skeleton-knowledge {
+  border: var(--card-border);
+  border-radius: var(--radius-card);
+  background: var(--surface-strong);
+  box-shadow: var(--card-shadow);
+}
+
+.loading-skeleton-card {
+  min-height: 128px;
+  padding: 14px;
+}
+
+.loading-skeleton-table,
+.loading-skeleton-panel {
+  padding: 20px;
+}
+
+.loading-skeleton-knowledge {
+  min-height: 212px;
+  padding: 22px;
+}
+
+.loading-skeleton-table-rows {
+  display: grid;
+  gap: 14px;
+}
+
+@keyframes skeleton-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (max-width: 720px) {
+  .loading-skeleton-table,
+  .loading-skeleton-panel,
+  .loading-skeleton-knowledge {
+    padding: 18px 16px;
+  }
+
+  .loading-skeleton-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .loading-skeleton-row {
+    flex-wrap: wrap;
+  }
+}

@@ -1,0 +1,172 @@
+.state-page-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 248px minmax(0, 1fr);
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.state-main {
+  min-width: 0;
+  padding: var(--page-padding);
+  display: grid;
+  gap: 18px;
+}
+
+.state-header,
+.state-header-badge {
+  display: flex;
+  align-items: center;
+}
+
+.state-header {
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 22px;
+  border-radius: var(--radius-card);
+  border: var(--card-border);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: var(--card-shadow);
+}
+
+.state-header h1,
+.state-panel h2,
+.state-guideline-card h3 {
+  margin: 0;
+}
+
+.state-header p,
+.state-preset-item span,
+.state-guideline-card ul {
+  margin: 0;
+}
+
+.state-header h1 {
+  font-size: 1.72rem;
+}
+
+.state-header p {
+  margin-top: 6px;
+  color: #64748b;
+  max-width: 720px;
+}
+
+.state-header-badge {
+  gap: 8px;
+  min-height: var(--button-height);
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--brand-surface);
+  color: var(--brand-strong);
+  font-weight: 700;
+}
+
+.state-layout {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.state-panel,
+.state-preview-card,
+.state-guideline-card {
+  border-radius: var(--radius-card);
+  border: var(--card-border);
+  background: #fff;
+  box-shadow: var(--card-shadow);
+}
+
+.state-panel {
+  padding: 18px;
+  display: grid;
+  gap: 12px;
+}
+
+.state-preset-list {
+  display: grid;
+  gap: 10px;
+}
+
+.state-preset-item {
+  width: 100%;
+  padding: 13px 15px;
+  border: var(--card-border);
+  border-radius: 15px;
+  background: #fff;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.state-preset-item strong {
+  display: block;
+  font-size: 0.94rem;
+  color: #0f172a;
+}
+
+.state-preset-item span {
+  display: block;
+  margin-top: 6px;
+  color: #64748b;
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+
+.state-preset-item.is-active {
+  border-color: #93c5fd;
+  background: #eff6ff;
+  box-shadow: 0 12px 28px rgba(59, 130, 246, 0.12);
+}
+
+.state-preview-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.state-guideline-card {
+  padding: 18px 20px;
+}
+
+.state-guideline-card h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.state-guideline-card ul {
+  margin-top: 14px;
+  padding-left: 18px;
+  color: #475569;
+  line-height: 1.7;
+}
+
+@media (max-width: 1080px) {
+  .state-page-shell {
+    grid-template-columns: 88px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 860px) {
+  .state-page-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .state-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .state-main {
+    padding: 20px var(--page-padding-mobile);
+  }
+
+  .state-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
