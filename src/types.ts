@@ -65,3 +65,18 @@ export interface KnowledgeResource {
   icon: string
   accent: string
 }
+
+export interface AuditLogEntry {
+  id: string
+  actorId: string
+  actorName: string
+  actorRoleCode: 'tester' | 'reviewer' | 'admin'
+  actorRoleLabel: string
+  action: string
+  targetType: string
+  targetId: string
+  targetTitle: string
+  detail: string
+  metadata: Record<string, unknown>
+  createdAt: string
+}

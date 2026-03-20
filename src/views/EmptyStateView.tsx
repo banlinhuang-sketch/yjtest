@@ -4,6 +4,7 @@ import { EmptyState } from '../components/EmptyState.tsx'
 import { Icon } from '../components/Icon.tsx'
 import { WorkspaceSidebar, type WorkspaceSidebarItem } from '../components/WorkspaceSidebar.tsx'
 import type { StatePresetId } from '../globalStates.ts'
+import { buildWorkspaceSidebarItems } from '../workspaceSidebarItems.ts'
 import './EmptyStateView.css'
 
 const sidebarItems: WorkspaceSidebarItem[] = [
@@ -80,6 +81,10 @@ interface EmptyStateViewProps {
   onOpenReview: () => void
   onOpenExport: () => void
   onOpenKnowledge: () => void
+  onOpenAuditLogs?: () => void
+  canOpenAuditLogs?: boolean
+  currentUserName?: string
+  currentUserRole?: string
   initialPreset?: StatePresetId
   onPrimaryAction?: () => void
   headerTitle?: string
@@ -91,6 +96,10 @@ export function EmptyStateView({
   onOpenReview,
   onOpenExport,
   onOpenKnowledge,
+  onOpenAuditLogs,
+  canOpenAuditLogs = false,
+  currentUserName = 'Banlin Huang',
+  currentUserRole = '设计验收',
   initialPreset = 'no-data',
   onPrimaryAction,
   headerTitle,
@@ -99,6 +108,10 @@ export function EmptyStateView({
   const [activePreset, setActivePreset] = useState<StatePresetId>(initialPreset)
 
   const preset = useMemo(() => presetMap[activePreset], [activePreset])
+  const visibleSidebarItems = useMemo(
+    () => (canOpenAuditLogs ? buildWorkspaceSidebarItems({ includeAuditLogs: true }) : sidebarItems),
+    [canOpenAuditLogs],
+  )
 
   useEffect(() => {
     setActivePreset(initialPreset)
@@ -122,6 +135,11 @@ export function EmptyStateView({
 
     if (nextKey === 'knowledge') {
       onOpenKnowledge()
+      return
+    }
+
+    if (nextKey === 'audit' && onOpenAuditLogs) {
+      onOpenAuditLogs()
     }
   }
 
@@ -131,11 +149,11 @@ export function EmptyStateView({
         brandIcon="tips_and_updates"
         brandTitle="亿境测试部"
         brandSubtitle="P6 状态模板"
-        items={sidebarItems}
+        items={visibleSidebarItems}
         activeKey="states"
         onSelect={handleSidebarSelect}
-        userName="Banlin Huang"
-        userRole="设计验收"
+        userName={currentUserName}
+        userRole={currentUserRole}
         theme="dark"
       />
 

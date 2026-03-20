@@ -21,6 +21,10 @@ server/data/*.sqlite-shm
 server/data/*.sqlite-wal
 server/backups/
 server/exports/
+server/migration-snapshots/
+playwright-report/
+test-results/
+.env.formal
 
 # Editor directories and files
 .vscode/*

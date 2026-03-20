@@ -143,7 +143,12 @@ export function CaseInlineEditor({
       <div className="inline-editor-grid">
         <label className="inline-editor-field inline-editor-field-span-2">
           <span>用例标题</span>
-          <input type="text" value={formState.title} onChange={(event) => updateField('title', event.target.value)} />
+          <input
+            data-testid="inline-editor-title-input"
+            type="text"
+            value={formState.title}
+            onChange={(event) => updateField('title', event.target.value)}
+          />
         </label>
 
         <label className="inline-editor-field">
@@ -158,7 +163,11 @@ export function CaseInlineEditor({
 
         <label className="inline-editor-field">
           <span>范围</span>
-          <select value={formState.scope} onChange={(event) => updateField('scope', event.target.value as TestCase['scope'])}>
+          <select
+            data-testid="inline-editor-scope-select"
+            value={formState.scope}
+            onChange={(event) => updateField('scope', event.target.value as TestCase['scope'])}
+          >
             <option value="app">手机 App</option>
             <option value="glasses">智能眼镜</option>
             <option value="linked">双端联动</option>
@@ -168,6 +177,7 @@ export function CaseInlineEditor({
         <label className="inline-editor-field">
           <span>优先级</span>
           <select
+            data-testid="inline-editor-priority-select"
             value={formState.priority}
             onChange={(event) => updateField('priority', event.target.value as TestCase['priority'])}
           >
@@ -179,7 +189,11 @@ export function CaseInlineEditor({
 
         <label className="inline-editor-field">
           <span>状态</span>
-          <select value={formState.status} onChange={(event) => updateField('status', event.target.value as TestCase['status'])}>
+          <select
+            data-testid="inline-editor-status-select"
+            value={formState.status}
+            onChange={(event) => updateField('status', event.target.value as TestCase['status'])}
+          >
             <option value="草稿">草稿</option>
             <option value="待审核">待审核</option>
             <option value="已沉淀">已沉淀</option>

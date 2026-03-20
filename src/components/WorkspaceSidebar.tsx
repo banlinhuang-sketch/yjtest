@@ -78,6 +78,7 @@ export function WorkspaceSidebar({
               <button
                 className={`workspace-sidebar-item ${item.key === activeKey ? 'is-active' : ''}`.trim()}
                 type="button"
+                data-testid={`sidebar-item-${item.key}`}
                 onClick={() => onSelect(item.key)}
               >
                 <Icon name={item.icon} />

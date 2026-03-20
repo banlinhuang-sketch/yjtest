@@ -7,6 +7,7 @@ import { LoadingSkeleton } from '../components/LoadingSkeleton.tsx'
 import { Toast, type ToastVariant } from '../components/Toast.tsx'
 import { WorkspaceSidebar, type WorkspaceSidebarItem } from '../components/WorkspaceSidebar.tsx'
 import type { Priority, Scope, TestCase } from '../types.ts'
+import { buildWorkspaceSidebarItems } from '../workspaceSidebarItems.ts'
 import './ReviewCenterView.css'
 
 interface ToastState {
@@ -36,6 +37,8 @@ interface ReviewCenterViewProps {
   onOpenExport: () => void
   onOpenKnowledge: () => void
   onOpenStates: () => void
+  onOpenAuditLogs: () => void
+  canOpenAuditLogs?: boolean
 }
 
 const sidebarItems: WorkspaceSidebarItem[] = [
@@ -112,6 +115,8 @@ export function ReviewCenterView({
   onOpenExport,
   onOpenKnowledge,
   onOpenStates,
+  onOpenAuditLogs,
+  canOpenAuditLogs = false,
 }: ReviewCenterViewProps) {
   const [reviewSegment, setReviewSegment] = useState<ReviewSegment>('pending')
   const [selectedCaseId, setSelectedCaseId] = useState<string>('')
@@ -191,6 +196,10 @@ export function ReviewCenterView({
   const activeReviewComment = activeSelectedCaseId
     ? reviewNotesByCaseId[activeSelectedCaseId] ?? selectedCase?.reviewNote ?? ''
     : ''
+  const visibleSidebarItems = useMemo(
+    () => (canOpenAuditLogs ? buildWorkspaceSidebarItems({ includeAuditLogs: true }) : sidebarItems),
+    [canOpenAuditLogs],
+  )
 
   useEffect(() => {
     if (!toastState) {
@@ -214,6 +223,11 @@ export function ReviewCenterView({
 
     if (nextKey === 'knowledge') {
       onOpenKnowledge()
+      return
+    }
+
+    if (nextKey === 'audit') {
+      onOpenAuditLogs()
       return
     }
 
@@ -338,7 +352,7 @@ export function ReviewCenterView({
         brandIcon="account_tree"
         brandTitle="亿境测试部"
         brandSubtitle="P3 审核中心"
-        items={sidebarItems}
+        items={visibleSidebarItems}
         activeKey="review"
         onSelect={handleSidebarSelect}
         userName={currentUserName}
@@ -398,6 +412,7 @@ export function ReviewCenterView({
               aria-selected={reviewSegment === option.key}
               className={`review-segment-button ${reviewSegment === option.key ? 'is-active' : ''}`.trim()}
               type="button"
+              data-testid={`review-segment-${option.key}`}
               onClick={() => handleSegmentChange(option.key)}
             >
               <strong>{option.label}</strong>
@@ -412,6 +427,7 @@ export function ReviewCenterView({
             <input
               placeholder="搜索 Case ID / 标题 / 提交人"
               type="text"
+              data-testid="review-search-input"
               value={keyword}
               onChange={(event) => {
                 setKeyword(event.target.value)
@@ -489,10 +505,10 @@ export function ReviewCenterView({
           </label>
 
           <div className="review-toolbar-actions">
-            <button type="button" aria-label="重置筛选" title="重置筛选" onClick={resetFilters}>
+            <button type="button" aria-label="重置筛选" title="重置筛选" data-testid="review-reset-button" onClick={resetFilters}>
               <Icon name="filter_alt_off" />
             </button>
-            <button type="button" aria-label="刷新列表" title="刷新列表" onClick={handleRefresh}>
+            <button type="button" aria-label="刷新列表" title="刷新列表" data-testid="review-refresh-button" onClick={handleRefresh}>
               <Icon name="refresh" />
             </button>
           </div>
@@ -519,6 +535,7 @@ export function ReviewCenterView({
                       key={item.id}
                       className={`review-case-card ${isSelected ? 'selected' : ''}`.trim()}
                       type="button"
+                      data-testid={`review-case-${item.id}`}
                       onClick={() => {
                         setSelectedCaseId(item.id)
                         setCommentError(false)
@@ -629,6 +646,7 @@ export function ReviewCenterView({
                           <span>审核意见</span>
                           <textarea
                             rows={3}
+                            data-testid="review-comment-input"
                             value={activeReviewComment}
                             onChange={(event) => updateReviewComment(event.target.value)}
                             placeholder="请输入审核意见，如用例步骤不完整、目标不明确或需补充边界说明，请在此详细描述。"
@@ -641,11 +659,11 @@ export function ReviewCenterView({
                             <Icon name="open_in_new" />
                             <span>进入详情编辑</span>
                           </button>
-                          <button className="review-button danger" type="button" onClick={handleReject}>
+                          <button className="review-button danger" type="button" data-testid="review-reject-button" onClick={handleReject}>
                             <Icon name="assignment_return" />
                             <span>退回草稿</span>
                           </button>
-                          <button className="review-button primary" type="button" onClick={handleApprove}>
+                          <button className="review-button primary" type="button" data-testid="review-approve-button" onClick={handleApprove}>
                             <Icon name="task_alt" />
                             <span>审核通过</span>
                           </button>

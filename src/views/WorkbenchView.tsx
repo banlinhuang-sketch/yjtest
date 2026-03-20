@@ -9,6 +9,7 @@ import { WorkspaceSidebar, type WorkspaceSidebarItem } from '../components/Works
 import { sampleKnowledge, scopeMeta } from '../data.ts'
 import type { Priority, Scope, TestCase } from '../types.ts'
 import { formatNowLabel, matchesCase } from '../utils.ts'
+import { buildWorkspaceSidebarItems } from '../workspaceSidebarItems.ts'
 
 type PriorityFilter = Priority | 'all'
 
@@ -27,6 +28,10 @@ interface WorkbenchViewProps {
   onOpenExport: () => void
   onOpenKnowledge: () => void
   onOpenStates: () => void
+  onOpenAuditLogs: () => void
+  canOpenAuditLogs?: boolean
+  currentUserName?: string
+  currentUserRole?: string
 }
 
 const sidebarItems: WorkspaceSidebarItem[] = [
@@ -177,7 +182,7 @@ function CaseCard({
 
   return (
     <article className={`case-item ${selected ? 'selected' : ''}`.trim()}>
-      <button className="case-item-button" type="button" onClick={onSelect}>
+      <button className="case-item-button" type="button" data-testid={`case-card-${item.id}`} onClick={onSelect}>
         <div className="case-item-top">
           <span className="case-item-id">{item.id}</span>
           <div className="case-item-tags">
@@ -235,6 +240,10 @@ export function WorkbenchView({
   onOpenExport,
   onOpenKnowledge,
   onOpenStates,
+  onOpenAuditLogs,
+  canOpenAuditLogs = false,
+  currentUserName = 'Banlin Huang',
+  currentUserRole = '测试设计负责人',
 }: WorkbenchViewProps) {
   const titleInputRef = useRef<HTMLInputElement>(null)
   const [filterScope, setFilterScope] = useState<Scope | null>(null)
@@ -275,6 +284,10 @@ export function WorkbenchView({
     () => (activeSelectedCaseId ? cases.find((item) => item.id === activeSelectedCaseId) ?? null : null),
     [activeSelectedCaseId, cases],
   )
+  const visibleSidebarItems = useMemo(
+    () => (canOpenAuditLogs ? buildWorkspaceSidebarItems({ includeAuditLogs: true }) : sidebarItems),
+    [canOpenAuditLogs],
+  )
 
   const totalCount = cases.length
   const linkedCount = cases.filter((item) => item.scope === 'linked').length
@@ -304,6 +317,11 @@ export function WorkbenchView({
 
     if (nextKey === 'knowledge') {
       onOpenKnowledge()
+      return
+    }
+
+    if (nextKey === 'audit') {
+      onOpenAuditLogs()
       return
     }
 
@@ -376,11 +394,11 @@ export function WorkbenchView({
         brandIcon="dataset"
         brandTitle="亿境测试部"
         brandSubtitle="测试用例管理平台"
-        items={sidebarItems}
+        items={visibleSidebarItems}
         activeKey="workbench"
         onSelect={handleSidebarSelect}
-        userName="Banlin Huang"
-        userRole="测试设计负责人"
+        userName={currentUserName}
+        userRole={currentUserRole}
       />
 
       <main className="workbench-main">
@@ -402,6 +420,7 @@ export function WorkbenchView({
                 aria-label="搜索用例"
                 placeholder="搜索标题、模块、负责人或标签"
                 type="text"
+                data-testid="workbench-search-input"
                 value={keyword}
                 onChange={(event) => setKeyword(event.target.value)}
               />
@@ -424,6 +443,18 @@ export function WorkbenchView({
             <button className="topbar-icon-button" type="button" aria-label={"\u524d\u5f80\u5ba1\u6838\u4e2d\u5fc3"} title={"\u524d\u5f80\u5ba1\u6838\u4e2d\u5fc3"} onClick={onOpenReview}>
               <Icon name="fact_check" />
             </button>
+            {canOpenAuditLogs ? (
+              <button
+                className="topbar-icon-button"
+                type="button"
+                aria-label="前往审计日志"
+                title="前往审计日志"
+                data-testid="open-audit-logs-button"
+                onClick={onOpenAuditLogs}
+              >
+                <Icon name="history" />
+              </button>
+            ) : null}
           </div>
         </header>
 
@@ -506,6 +537,7 @@ export function WorkbenchView({
                     <input
                       id="draft-title"
                       ref={titleInputRef}
+                      data-testid="draft-title-input"
                       placeholder="例如：眼镜断连后通知补偿链路校验"
                       type="text"
                       value={draftTitle}
@@ -519,6 +551,7 @@ export function WorkbenchView({
                       id="draft-summary"
                       placeholder="请补充业务背景、边界条件、跨端链路和重点风险，便于 Agent 生成高质量草稿。"
                       rows={6}
+                      data-testid="draft-requirement-input"
                       value={draftSummary}
                       onChange={(event) => setDraftSummary(event.target.value)}
                     />
@@ -538,6 +571,7 @@ export function WorkbenchView({
                     className="compose-button"
                     disabled={!readyToGenerate || isGenerating}
                     type="button"
+                    data-testid="generate-draft-button"
                     onClick={handleGenerateDraft}
                   >
                     {isGenerating ? <span className="button-spinner" aria-hidden="true" /> : <Icon name="auto_awesome" />}

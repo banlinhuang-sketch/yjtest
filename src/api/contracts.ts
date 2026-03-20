@@ -71,3 +71,23 @@ export interface KnowledgeSourceListResponse {
   items: KnowledgeSourceDTO[]
   total: number
 }
+
+export interface AuditLogDTO {
+  id: string
+  actorId: string
+  actorName: string
+  actorRoleCode: 'tester' | 'reviewer' | 'admin'
+  actorRoleLabel: string
+  action: string
+  targetType: string
+  targetId: string
+  targetTitle: string
+  detail: string
+  metadata: Record<string, unknown>
+  createdAt: string
+}
+
+export interface AuditLogListResponse {
+  items: AuditLogDTO[]
+  total: number
+}

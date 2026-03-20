@@ -2,7 +2,7 @@ import {
   normalizeExportTaskCreateResponse,
   normalizeExportTaskStatusResponse,
 } from './backendAdapter.ts'
-import { apiRequest, resolveApiUrl } from './client.ts'
+import { ApiError, apiRequest, getStoredToken, resolveApiUrl } from './client.ts'
 
 export async function createExportTask(input: {
   format: 'excel' | 'word'
@@ -46,4 +46,38 @@ export async function waitForExportTask(taskId: string) {
   }
 
   throw new Error('导出任务轮询超时。')
+}
+
+export async function downloadExportFile(downloadUrl: string, suggestedFileName?: string) {
+  const token = getStoredToken()
+  const response = await fetch(resolveApiUrl(downloadUrl), {
+    method: 'GET',
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  })
+
+  if (!response.ok) {
+    let message = '导出文件下载失败，请稍后重试。'
+
+    try {
+      const payload = (await response.json()) as { message?: string; error?: { message?: string } }
+      message = payload?.message || payload?.error?.message || message
+    } catch {
+      // Ignore parse errors and fall back to the default message.
+    }
+
+    throw new ApiError(message, response.status, 'EXPORT_DOWNLOAD_FAILED')
+  }
+
+  const blob = await response.blob()
+  const objectUrl = URL.createObjectURL(blob)
+  const anchor = document.createElement('a')
+  anchor.href = objectUrl
+  if (suggestedFileName) {
+    anchor.download = suggestedFileName
+  }
+  anchor.style.display = 'none'
+  document.body.appendChild(anchor)
+  anchor.click()
+  anchor.remove()
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 0)
 }

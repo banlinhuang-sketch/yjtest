@@ -6,6 +6,7 @@ import { LoadingSkeleton } from '../components/LoadingSkeleton.tsx'
 import { Toast } from '../components/Toast.tsx'
 import { WorkspaceSidebar, type WorkspaceSidebarItem } from '../components/WorkspaceSidebar.tsx'
 import type { KnowledgeResource } from '../types.ts'
+import { buildWorkspaceSidebarItems } from '../workspaceSidebarItems.ts'
 import './KnowledgeBaselineView.css'
 
 const sidebarItems: WorkspaceSidebarItem[] = [
@@ -44,6 +45,10 @@ interface KnowledgeBaselineViewProps {
   onOpenReview: () => void
   onOpenExport: () => void
   onOpenStates: () => void
+  onOpenAuditLogs: () => void
+  canOpenAuditLogs?: boolean
+  currentUserName?: string
+  currentUserRole?: string
 }
 
 export function KnowledgeBaselineView({
@@ -54,9 +59,17 @@ export function KnowledgeBaselineView({
   onOpenReview,
   onOpenExport,
   onOpenStates,
+  onOpenAuditLogs,
+  canOpenAuditLogs = false,
+  currentUserName = 'Banlin Huang',
+  currentUserRole = '知识基线管理员',
 }: KnowledgeBaselineViewProps) {
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [isSyncing, setIsSyncing] = useState(false)
+  const visibleSidebarItems = useMemo(
+    () => (canOpenAuditLogs ? buildWorkspaceSidebarItems({ includeAuditLogs: true }) : sidebarItems),
+    [canOpenAuditLogs],
+  )
 
   const readyCount = useMemo(() => sources.length, [sources])
 
@@ -82,6 +95,11 @@ export function KnowledgeBaselineView({
 
     if (nextKey === 'export') {
       onOpenExport()
+      return
+    }
+
+    if (nextKey === 'audit') {
+      onOpenAuditLogs()
       return
     }
 
@@ -112,11 +130,11 @@ export function KnowledgeBaselineView({
       <WorkspaceSidebar
         brandIcon="shield"
         brandTitle="亿境测试部"
-        items={sidebarItems}
+        items={visibleSidebarItems}
         activeKey="knowledge"
         onSelect={handleSidebarSelect}
-        userName="Banlin Huang"
-        userRole="知识基线管理员"
+        userName={currentUserName}
+        userRole={currentUserRole}
         theme="dark"
       />
 

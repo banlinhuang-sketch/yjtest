@@ -1,5 +1,7 @@
 import type { Attachment, ActivityEntry, Priority, Scope, Status, StepRow } from '../types.ts'
 import type {
+  AuditLogDTO,
+  AuditLogListResponse,
   ApiUser,
   CaseDetailDTO,
   CaseListResponse,
@@ -200,6 +202,10 @@ function normalizeRoleCode(value: unknown): NonNullable<ApiUser['roleCode']> {
   }
 
   return 'tester'
+}
+
+function normalizeAuditRoleCode(value: unknown): AuditLogDTO['actorRoleCode'] {
+  return normalizeRoleCode(value)
 }
 
 function buildRoleLabel(roleCode: NonNullable<ApiUser['roleCode']>) {
@@ -473,6 +479,45 @@ export function normalizeKnowledgeSourceListResponse(payload: unknown): Knowledg
 
   return {
     items: items.map(normalizeKnowledgeSource),
+    total: Number(readValue(source, ['total', 'count', 'totalCount', 'total_count']) ?? items.length) || items.length,
+  }
+}
+
+function normalizeMetadata(value: unknown): Record<string, unknown> {
+  return isRecord(value) ? value : {}
+}
+
+function normalizeAuditLog(value: unknown): AuditLogDTO {
+  const source = asRecord(value) ?? {}
+  const actorRoleCode = normalizeAuditRoleCode(
+    readValue(source, ['actorRoleCode', 'actor_role_code', 'roleCode', 'role_code']),
+  )
+
+  return {
+    id: toStringValue(readValue(source, ['id']), buildFallbackId('audit')),
+    actorId: toStringValue(readValue(source, ['actorId', 'actor_id', 'userId', 'user_id']), ''),
+    actorName: toStringValue(readValue(source, ['actorName', 'actor_name', 'userName', 'user_name']), '未知用户'),
+    actorRoleCode,
+    actorRoleLabel: toStringValue(
+      readValue(source, ['actorRoleLabel', 'actor_role_label', 'roleLabel', 'role_label']),
+      buildRoleLabel(actorRoleCode),
+    ),
+    action: toStringValue(readValue(source, ['action', 'event', 'eventCode']), 'unknown'),
+    targetType: toStringValue(readValue(source, ['targetType', 'target_type']), ''),
+    targetId: toStringValue(readValue(source, ['targetId', 'target_id']), ''),
+    targetTitle: toStringValue(readValue(source, ['targetTitle', 'target_title']), ''),
+    detail: toStringValue(readValue(source, ['detail', 'message', 'description']), ''),
+    metadata: normalizeMetadata(readValue(source, ['metadata', 'metadata_json', 'meta'])),
+    createdAt: toIsoString(readValue(source, ['createdAt', 'created_at', 'timestamp'])),
+  }
+}
+
+export function normalizeAuditLogListResponse(payload: unknown): AuditLogListResponse {
+  const source = asRecord(unwrapApiPayload(payload)) ?? {}
+  const items = toArray(readValue(source, ['items', 'records', 'list', 'rows']))
+
+  return {
+    items: items.map(normalizeAuditLog),
     total: Number(readValue(source, ['total', 'count', 'totalCount', 'total_count']) ?? items.length) || items.length,
   }
 }

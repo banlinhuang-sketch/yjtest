@@ -78,6 +78,7 @@ export function LoginView({
             <span>账号</span>
             <input
               type="text"
+              data-testid="login-username-input"
               value={username}
               onChange={(event) => setUsername(event.target.value)}
               placeholder="请输入账号"
@@ -89,6 +90,7 @@ export function LoginView({
             <span>密码</span>
             <input
               type="password"
+              data-testid="login-password-input"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               placeholder="请输入密码"
@@ -105,12 +107,12 @@ export function LoginView({
         ) : null}
 
         <div className="login-actions">
-          <button className="login-primary-button" type="submit" disabled={!canSubmit}>
+          <button className="login-primary-button" type="submit" data-testid="login-submit-button" disabled={!canSubmit}>
             {isSubmitting ? <span className="login-button-spinner" aria-hidden="true" /> : <Icon name="login" />}
             {isSubmitting ? '登录中...' : '登录进入平台'}
           </button>
 
-          <button className="login-secondary-button" type="button" disabled={isSubmitting} onClick={handleUseDemo}>
+          <button className="login-secondary-button" type="button" data-testid="login-demo-button" disabled={isSubmitting} onClick={handleUseDemo}>
             {isSubmitting ? (
               <span className="login-button-spinner secondary" aria-hidden="true" />
             ) : (

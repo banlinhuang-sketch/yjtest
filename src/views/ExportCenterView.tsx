@@ -5,8 +5,9 @@ import { Icon } from '../components/Icon.tsx'
 import { LoadingSkeleton } from '../components/LoadingSkeleton.tsx'
 import { Toast } from '../components/Toast.tsx'
 import { WorkspaceSidebar, type WorkspaceSidebarItem } from '../components/WorkspaceSidebar.tsx'
-import { createExportTask, waitForExportTask } from '../api/exports.ts'
+import { createExportTask, downloadExportFile, waitForExportTask } from '../api/exports.ts'
 import type { ExportFormat, Priority, Scope, Status, TestCase } from '../types.ts'
+import { buildWorkspaceSidebarItems } from '../workspaceSidebarItems.ts'
 import './ExportCenterView.css'
 
 type TimeRange = 'all' | '7d' | '30d' | '90d'
@@ -24,6 +25,10 @@ interface ExportCenterViewProps {
   onOpenReview: () => void
   onOpenKnowledge: () => void
   onOpenStates: () => void
+  onOpenAuditLogs: () => void
+  canOpenAuditLogs?: boolean
+  currentUserName?: string
+  currentUserRole?: string
 }
 
 const sidebarItems: WorkspaceSidebarItem[] = [
@@ -139,6 +144,10 @@ export function ExportCenterView({
   onOpenReview,
   onOpenKnowledge,
   onOpenStates,
+  onOpenAuditLogs,
+  canOpenAuditLogs = false,
+  currentUserName = '管理员',
+  currentUserRole = '系统管理员',
 }: ExportCenterViewProps) {
   const [scopeFilter, setScopeFilter] = useState<Scope | 'all'>('all')
   const [statusFilter, setStatusFilter] = useState<Status | 'all'>('all')
@@ -151,6 +160,10 @@ export function ExportCenterView({
   const [isFiltering, setIsFiltering] = useState(true)
   const [exportStatus, setExportStatus] = useState<ExportStatus>('idle')
   const [toastState, setToastState] = useState<ToastState | null>(null)
+  const visibleSidebarItems = useMemo(
+    () => (canOpenAuditLogs ? buildWorkspaceSidebarItems({ includeAuditLogs: true }) : sidebarItems),
+    [canOpenAuditLogs],
+  )
 
   const tagOptions = useMemo(() => ['all', ...new Set(cases.flatMap((item) => item.tags))], [cases])
 
@@ -242,6 +255,11 @@ export function ExportCenterView({
       return
     }
 
+    if (nextKey === 'audit') {
+      onOpenAuditLogs()
+      return
+    }
+
     if (nextKey === 'states') {
       onOpenStates()
     }
@@ -284,15 +302,7 @@ export function ExportCenterView({
         throw new Error(taskResult.errorMessage ?? '导出任务未能成功完成。')
       }
 
-      const anchor = document.createElement('a')
-      anchor.href = taskResult.downloadUrl
-      if (taskResult.fileName) {
-        anchor.download = taskResult.fileName
-      }
-      anchor.style.display = 'none'
-      document.body.appendChild(anchor)
-      anchor.click()
-      anchor.remove()
+      await downloadExportFile(taskResult.downloadUrl, taskResult.fileName)
 
       setExportStatus('success')
       showToast('success', '导出成功')
@@ -309,10 +319,11 @@ export function ExportCenterView({
       <WorkspaceSidebar
         brandIcon="account_tree"
         brandTitle="亿境测试部"
-        items={sidebarItems}
+        items={visibleSidebarItems}
         activeKey="export"
         onSelect={handleSidebarSelect}
-        userName="管理员"
+        userName={currentUserName}
+        userRole={currentUserRole}
         theme="dark"
       />
 
@@ -388,6 +399,7 @@ export function ExportCenterView({
             <FilterField label="关键词">
               <input
                 type="text"
+                data-testid="export-keyword-input"
                 value={keyword}
                 onChange={(event) => setKeyword(event.target.value)}
                 placeholder="搜索 ID / 标题 / 标签"
@@ -513,10 +525,14 @@ export function ExportCenterView({
               替换为真实接口调用即可接入服务端。
             </p>
             {exportStatus === 'error' ? (
-              <p className="export-status-hint error">最近一次导出未完成，请检查筛选条件、网络状态或切换导出格式后重试。</p>
+              <p className="export-status-hint error" data-testid="export-status-error">
+                最近一次导出未完成，请检查筛选条件、网络状态或切换导出格式后重试。
+              </p>
             ) : null}
             {exportStatus === 'success' ? (
-              <p className="export-status-hint success">最近一次导出已完成，可继续调整筛选条件导出下一批数据。</p>
+              <p className="export-status-hint success" data-testid="export-status-success">
+                最近一次导出已完成，可继续调整筛选条件导出下一批数据。
+              </p>
             ) : null}
           </div>
 
@@ -526,7 +542,7 @@ export function ExportCenterView({
               <strong>预计文件大小约 {estimatedSize} MB</strong>
             </div>
 
-            <button className="export-primary-button" type="button" onClick={handleExport} disabled={isExporting}>
+            <button className="export-primary-button" type="button" data-testid="export-start-button" onClick={handleExport} disabled={isExporting}>
               {isExporting ? <span className="export-spinner" aria-hidden="true" /> : <Icon name="download" />}
               <span>{isExporting ? '正在打包...' : '开始导出'}</span>
             </button>

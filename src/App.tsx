@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 
 import './App.css'
+import { listAuditLogs } from './api/audit.ts'
 import { getCurrentUser, login } from './api/auth.ts'
 import { createCase, generateDraftCase, listCases, reviewCase, saveCase } from './api/cases.ts'
 import { listKnowledgeSources } from './api/knowledge.ts'
@@ -8,8 +9,9 @@ import { ApiError, clearStoredToken, getStoredToken, setUnauthorizedHandler } fr
 import type { ApiUser } from './api/contracts.ts'
 import { Toast, type ToastVariant } from './components/Toast.tsx'
 import { getSessionExpiredState, normalizeErrorToGlobalState, type StatePresetId } from './globalStates.ts'
-import type { KnowledgeResource, TestCase } from './types.ts'
+import type { AuditLogEntry, KnowledgeResource, TestCase } from './types.ts'
 import { formatNowLabel } from './utils.ts'
+import { AuditLogView } from './views/AuditLogView.tsx'
 import { CaseDetailEditorView } from './views/CaseDetailEditorView.tsx'
 import { EmptyStateView } from './views/EmptyStateView.tsx'
 import { ExportCenterView } from './views/ExportCenterView.tsx'
@@ -25,6 +27,7 @@ type WorkspaceView =
   | 'review-center'
   | 'export-center'
   | 'knowledge-baseline'
+  | 'audit-logs'
   | 'empty-state'
 
 type BusinessView = Exclude<WorkspaceView, 'login' | 'case-detail'>
@@ -44,6 +47,7 @@ function isBusinessView(value: string | null): value is BusinessView {
     value === 'review-center' ||
     value === 'export-center' ||
     value === 'knowledge-baseline' ||
+    value === 'audit-logs' ||
     value === 'empty-state'
   )
 }
@@ -98,8 +102,10 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<ApiUser | null>(null)
   const [cases, setCases] = useState<TestCase[]>([])
   const [knowledgeSources, setKnowledgeSources] = useState<KnowledgeResource[]>([])
+  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([])
   const [isCasesLoading, setIsCasesLoading] = useState(false)
   const [isKnowledgeLoading, setIsKnowledgeLoading] = useState(false)
+  const [isAuditLogsLoading, setIsAuditLogsLoading] = useState(false)
   const [isAuthenticating, setIsAuthenticating] = useState(false)
   const [loginError, setLoginError] = useState<string | null>(null)
   const [globalToast, setGlobalToast] = useState<GlobalToastState | null>(null)
@@ -118,6 +124,7 @@ export default function App() {
     [cases, selectedCaseId],
   )
   const canReview = currentUser?.roleCode === 'reviewer' || currentUser?.roleCode === 'admin'
+  const canAccessAuditLogs = currentUser?.roleCode === 'admin'
   const activeView: WorkspaceView = view === 'case-detail' && !selectedCase ? caseBackTarget : view
 
   const showToast = useCallback((variant: ToastVariant, message: string) => {
@@ -159,6 +166,7 @@ export default function App() {
     setCurrentUser(null)
     setCases([])
     setKnowledgeSources([])
+    setAuditLogs([])
     setAuthState('unauthenticated')
     setView('login')
     setSelectedCaseId(null)
@@ -216,6 +224,27 @@ export default function App() {
       throw error
     } finally {
       setIsKnowledgeLoading(false)
+    }
+  }, [openGlobalState])
+
+  const loadAuditLogsFromApi = useCallback(async () => {
+    setIsAuditLogsLoading(true)
+
+    try {
+      const nextLogs = await listAuditLogs(200)
+      setAuditLogs(nextLogs)
+      setGlobalRetryAction(null)
+      return nextLogs
+    } catch (error) {
+      if (!(isApiError(error) && error.status === 401)) {
+        openGlobalState(error, {
+          retry: loadAuditLogsFromApi,
+          nextView: 'audit-logs',
+        })
+      }
+      throw error
+    } finally {
+      setIsAuditLogsLoading(false)
     }
   }, [openGlobalState])
 
@@ -323,6 +352,18 @@ export default function App() {
 
     void loadKnowledgeSourcesFromApi().catch(() => undefined)
   }, [authState, isKnowledgeLoading, knowledgeSources.length, loadKnowledgeSourcesFromApi, view])
+
+  useEffect(() => {
+    if (authState !== 'authenticated' || view !== 'audit-logs' || !canAccessAuditLogs) {
+      return
+    }
+
+    if (auditLogs.length > 0 || isAuditLogsLoading) {
+      return
+    }
+
+    void loadAuditLogsFromApi().catch(() => undefined)
+  }, [auditLogs.length, authState, canAccessAuditLogs, isAuditLogsLoading, loadAuditLogsFromApi, view])
 
   function navigate(nextView: BusinessView) {
     setView(nextView)
@@ -449,6 +490,10 @@ export default function App() {
         onOpenExport={() => navigate('export-center')}
         onOpenKnowledge={() => navigate('knowledge-baseline')}
         onOpenStates={() => navigate('empty-state')}
+        onOpenAuditLogs={() => navigate('audit-logs')}
+        canOpenAuditLogs={canAccessAuditLogs}
+        currentUserName={currentUser?.name ?? '未命名用户'}
+        currentUserRole={currentUser?.roleLabel ?? currentUser?.role ?? '测试成员'}
       />
     )
   } else if (activeView === 'knowledge-baseline') {
@@ -461,6 +506,10 @@ export default function App() {
         onOpenReview={() => navigate('review-center')}
         onOpenExport={() => navigate('export-center')}
         onOpenStates={() => navigate('empty-state')}
+        onOpenAuditLogs={() => navigate('audit-logs')}
+        canOpenAuditLogs={canAccessAuditLogs}
+        currentUserName={currentUser?.name ?? '未命名用户'}
+        currentUserRole={currentUser?.roleLabel ?? currentUser?.role ?? '测试成员'}
       />
     )
   } else if (activeView === 'export-center') {
@@ -471,6 +520,10 @@ export default function App() {
         onOpenReview={() => navigate('review-center')}
         onOpenKnowledge={() => navigate('knowledge-baseline')}
         onOpenStates={() => navigate('empty-state')}
+        onOpenAuditLogs={() => navigate('audit-logs')}
+        canOpenAuditLogs={canAccessAuditLogs}
+        currentUserName={currentUser?.name ?? '未命名用户'}
+        currentUserRole={currentUser?.roleLabel ?? currentUser?.role ?? '测试成员'}
       />
     )
   } else if (activeView === 'review-center') {
@@ -485,6 +538,24 @@ export default function App() {
         onReviewCase={handleReviewCase}
         onOpenWorkbench={() => navigate('workbench')}
         onOpenCase={(caseId) => openCaseDetail(caseId, 'review-center')}
+        onOpenExport={() => navigate('export-center')}
+        onOpenKnowledge={() => navigate('knowledge-baseline')}
+        onOpenStates={() => navigate('empty-state')}
+        onOpenAuditLogs={() => navigate('audit-logs')}
+        canOpenAuditLogs={canAccessAuditLogs}
+      />
+    )
+  } else if (activeView === 'audit-logs') {
+    content = (
+      <AuditLogView
+        logs={auditLogs}
+        isLoading={isAuditLogsLoading}
+        canAccess={canAccessAuditLogs}
+        currentUserName={currentUser?.name ?? '未命名用户'}
+        currentUserRole={currentUser?.roleLabel ?? currentUser?.role ?? '测试成员'}
+        onRefresh={loadAuditLogsFromApi}
+        onOpenWorkbench={() => navigate('workbench')}
+        onOpenReview={() => navigate('review-center')}
         onOpenExport={() => navigate('export-center')}
         onOpenKnowledge={() => navigate('knowledge-baseline')}
         onOpenStates={() => navigate('empty-state')}
@@ -508,6 +579,10 @@ export default function App() {
         onOpenReview={() => navigate('review-center')}
         onOpenExport={() => navigate('export-center')}
         onOpenKnowledge={() => navigate('knowledge-baseline')}
+        onOpenAuditLogs={() => navigate('audit-logs')}
+        canOpenAuditLogs={canAccessAuditLogs}
+        currentUserName={currentUser?.name ?? '未命名用户'}
+        currentUserRole={currentUser?.roleLabel ?? currentUser?.role ?? '测试成员'}
       />
     )
   } else {

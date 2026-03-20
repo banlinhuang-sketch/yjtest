@@ -288,6 +288,7 @@ ensureDirectoryFor(databasePath)
 const database = new DatabaseSync(databasePath)
 
 database.exec(`
+  PRAGMA busy_timeout = 5000;
   PRAGMA journal_mode = WAL;
   PRAGMA foreign_keys = ON;
 
@@ -374,6 +375,10 @@ const countAuditLogsStatement = database.prepare('SELECT COUNT(*) AS count FROM 
 const countExportRecordsStatement = database.prepare('SELECT COUNT(*) AS count FROM export_records')
 const selectUserByIdStatement = database.prepare('SELECT * FROM users WHERE id = ?')
 const selectUserByUsernameStatement = database.prepare('SELECT * FROM users WHERE username = ?')
+const selectAllUsersStatement = database.prepare(`
+  SELECT * FROM users
+  ORDER BY created_at ASC, id ASC
+`)
 const upsertUserStatement = database.prepare(`
   INSERT INTO users (
     id, username, password_hash, name, role_code, role_label, status, created_at, updated_at
@@ -463,6 +468,18 @@ const selectExportRecordsByActorStatement = database.prepare(`
   ORDER BY created_at DESC, id DESC
   LIMIT ?
 `)
+const selectSchemaTablesStatement = database.prepare(`
+  SELECT name, sql
+  FROM sqlite_master
+  WHERE type = 'table' AND name NOT LIKE 'sqlite_%'
+  ORDER BY name ASC
+`)
+const selectSchemaIndexesByTableStatement = database.prepare(`
+  SELECT name, sql
+  FROM sqlite_master
+  WHERE type = 'index' AND tbl_name = ? AND name NOT LIKE 'sqlite_%'
+  ORDER BY name ASC
+`)
 const upsertExportRecordStatement = database.prepare(`
   INSERT INTO export_records (
     id, task_id, actor_id, actor_name, actor_role_code, format,
@@ -542,6 +559,10 @@ export function getStoredUserByUsername(username) {
   return row ? rowToUser(row) : null
 }
 
+export function listStoredUsers() {
+  return selectAllUsersStatement.all().map(rowToUser)
+}
+
 export function listStoredCases() {
   return selectAllCasesStatement.all().map(rowToCase)
 }
@@ -598,5 +619,42 @@ export function getDatabaseMeta() {
     knowledgeSources: Number(countKnowledgeStatement.get().count ?? 0),
     auditLogs: Number(countAuditLogsStatement.get().count ?? 0),
     exportRecords: Number(countExportRecordsStatement.get().count ?? 0),
+  }
+}
+
+export function getDatabaseSchemaSnapshot() {
+  const tables = selectSchemaTablesStatement.all().map((tableRow) => {
+    const rowCountStatement = database.prepare(`SELECT COUNT(*) AS count FROM ${tableRow.name}`)
+    const rowCount = Number(rowCountStatement.get().count ?? 0)
+    const columns = database
+      .prepare(`PRAGMA table_info(${tableRow.name})`)
+      .all()
+      .map((column) => ({
+        cid: Number(column.cid),
+        name: column.name,
+        type: column.type,
+        notnull: Number(column.notnull) === 1,
+        defaultValue: column.dflt_value,
+        primaryKey: Number(column.pk) === 1,
+      }))
+    const indexes = selectSchemaIndexesByTableStatement.all(tableRow.name).map((indexRow) => ({
+      name: indexRow.name,
+      sql: indexRow.sql,
+    }))
+
+    return {
+      name: tableRow.name,
+      rowCount,
+      sql: tableRow.sql,
+      columns,
+      indexes,
+    }
+  })
+
+  return {
+    engine: 'sqlite',
+    databasePath,
+    generatedAt: new Date().toISOString(),
+    tables,
   }
 }
