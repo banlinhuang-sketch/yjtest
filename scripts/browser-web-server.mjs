@@ -4,10 +4,11 @@ const cwd = process.cwd()
 const webPort = process.env.BROWSER_WEB_PORT ?? '4178'
 const webHost = process.env.BROWSER_WEB_HOST ?? '127.0.0.1'
 const apiPort = process.env.BROWSER_API_PORT ?? '8797'
+const externalApiBaseUrl = (process.env.BROWSER_API_BASE_URL ?? '').trim()
 
 const env = {
   ...process.env,
-  VITE_API_BASE_URL: `http://${webHost}:${apiPort}`,
+  VITE_API_BASE_URL: externalApiBaseUrl || `http://${webHost}:${apiPort}`,
 }
 
 const child =

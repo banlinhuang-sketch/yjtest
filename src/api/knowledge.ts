@@ -2,6 +2,7 @@ import { normalizeKnowledgeSourceListResponse } from './backendAdapter.ts'
 import { apiRequest } from './client.ts'
 import type { KnowledgeSourceDTO } from './contracts.ts'
 import type { KnowledgeResource } from '../types.ts'
+import { getApiRoute } from './requestAdapter.ts'
 
 function knowledgeSourceDtoToResource(item: KnowledgeSourceDTO): KnowledgeResource {
   return {
@@ -17,7 +18,7 @@ function knowledgeSourceDtoToResource(item: KnowledgeSourceDTO): KnowledgeResour
 }
 
 export async function listKnowledgeSources() {
-  const payload = await apiRequest<unknown>('/api/v1/knowledge/sources')
+  const payload = await apiRequest<unknown>(getApiRoute('knowledgeSources'))
   const response = normalizeKnowledgeSourceListResponse(payload)
   return response.items.map(knowledgeSourceDtoToResource)
 }

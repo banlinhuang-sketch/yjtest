@@ -3,18 +3,25 @@ import {
   normalizeCaseListResponse,
 } from './backendAdapter.ts'
 import { apiRequest } from './client.ts'
-import { caseDetailDtoToTestCase, testCaseToCaseDetailPayload } from './caseAdapters.ts'
+import { caseDetailDtoToTestCase } from './caseAdapters.ts'
+import {
+  buildCaseListQuery,
+  buildCasePayload,
+  buildGenerateDraftPayload,
+  buildReviewPayload,
+  getApiRoute,
+} from './requestAdapter.ts'
 import type { TestCase } from '../types.ts'
 
 export async function listCases() {
-  const payload = await apiRequest<unknown>('/api/v1/cases', {
-    query: { page: 1, pageSize: 200 },
+  const payload = await apiRequest<unknown>(getApiRoute('casesList'), {
+    query: buildCaseListQuery(1, 200),
   })
   const response = normalizeCaseListResponse(payload)
 
   const detailedCases = await Promise.all(
     response.items.map((item) =>
-      apiRequest<unknown>(`/api/v1/cases/${encodeURIComponent(item.id)}`).then((detailPayload) =>
+      apiRequest<unknown>(getApiRoute('caseDetail', { id: item.id })).then((detailPayload) =>
         normalizeCaseDetailResponse(detailPayload),
       ),
     ),
@@ -24,9 +31,9 @@ export async function listCases() {
 }
 
 export async function saveCase(item: TestCase) {
-  const payload = await apiRequest<unknown>(`/api/v1/cases/${encodeURIComponent(item.id)}`, {
+  const payload = await apiRequest<unknown>(getApiRoute('caseDetail', { id: item.id }), {
     method: 'PATCH',
-    body: testCaseToCaseDetailPayload(item),
+    body: buildCasePayload(item),
   })
   const response = normalizeCaseDetailResponse(payload)
 
@@ -34,9 +41,9 @@ export async function saveCase(item: TestCase) {
 }
 
 export async function createCase(item: TestCase) {
-  const payload = await apiRequest<unknown>('/api/v1/cases', {
+  const payload = await apiRequest<unknown>(getApiRoute('casesList'), {
     method: 'POST',
-    body: testCaseToCaseDetailPayload(item),
+    body: buildCasePayload(item),
   })
   const response = normalizeCaseDetailResponse(payload)
 
@@ -48,9 +55,9 @@ export async function generateDraftCase(input: {
   title: string
   requirement: string
 }) {
-  const payload = await apiRequest<unknown>('/api/v1/cases/generate-draft', {
+  const payload = await apiRequest<unknown>(getApiRoute('generateDraft'), {
     method: 'POST',
-    body: input,
+    body: buildGenerateDraftPayload(input),
   })
   const response = normalizeCaseDetailResponse(payload)
 
@@ -61,13 +68,10 @@ export async function reviewCase(
   caseId: string,
   input: { action: 'approve' | 'reject'; reviewNote: string },
 ) {
-  const payload = await apiRequest<unknown>(
-    `/api/v1/cases/${encodeURIComponent(caseId)}/review`,
-    {
-      method: 'POST',
-      body: input,
-    },
-  )
+  const payload = await apiRequest<unknown>(getApiRoute('reviewCase', { id: caseId }), {
+    method: 'POST',
+    body: buildReviewPayload(input),
+  })
   const response = normalizeCaseDetailResponse(payload)
 
   return caseDetailDtoToTestCase(response)

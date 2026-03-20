@@ -23,6 +23,7 @@ server/backups/
 server/exports/
 server/migration-snapshots/
 playwright-report/
+playwright-report-formal/
 test-results/
 .env.formal
 

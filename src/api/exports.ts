@@ -3,6 +3,7 @@ import {
   normalizeExportTaskStatusResponse,
 } from './backendAdapter.ts'
 import { ApiError, apiRequest, getStoredToken, resolveApiUrl } from './client.ts'
+import { buildExportTaskPayload, getApiRoute } from './requestAdapter.ts'
 
 export async function createExportTask(input: {
   format: 'excel' | 'word'
@@ -15,16 +16,16 @@ export async function createExportTask(input: {
     tag: string
   }
 }) {
-  const payload = await apiRequest<unknown>('/api/v1/exports', {
+  const payload = await apiRequest<unknown>(getApiRoute('exportsCreate'), {
     method: 'POST',
-    body: input,
+    body: buildExportTaskPayload(input),
   })
 
   return normalizeExportTaskCreateResponse(payload)
 }
 
 export async function getExportTask(taskId: string) {
-  const payload = await apiRequest<unknown>(`/api/v1/exports/${encodeURIComponent(taskId)}`)
+  const payload = await apiRequest<unknown>(getApiRoute('exportTask', { id: taskId }))
   const task = normalizeExportTaskStatusResponse(payload)
 
   return {

@@ -1,10 +1,11 @@
 import { normalizeCurrentUserResponse, normalizeLoginResponse } from './backendAdapter.ts'
 import { apiRequest, storeToken } from './client.ts'
+import { buildLoginPayload, getApiRoute } from './requestAdapter.ts'
 
 export async function login(username: string, password: string) {
-  const payload = await apiRequest<unknown>('/api/v1/auth/login', {
+  const payload = await apiRequest<unknown>(getApiRoute('authLogin'), {
     method: 'POST',
-    body: { username, password },
+    body: buildLoginPayload(username, password),
     token: '',
   })
   const response = normalizeLoginResponse(payload)
@@ -14,6 +15,6 @@ export async function login(username: string, password: string) {
 }
 
 export async function getCurrentUser() {
-  const payload = await apiRequest<unknown>('/api/v1/auth/me')
+  const payload = await apiRequest<unknown>(getApiRoute('authMe'))
   return normalizeCurrentUserResponse(payload)
 }
